@@ -15,6 +15,8 @@ import (
 	"github.com/pascaldekloe/jwt"
 )
 
+type claimKey struct{}
+
 var someECKey *ecdsa.PrivateKey
 var someRSAKey *rsa.PrivateKey
 
@@ -105,7 +107,7 @@ func ExampleClaims_byName() {
 func ExampleHandler_context() {
 	h := &jwt.Handler{
 		Target: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			claims := req.Context().Value("verified-jwt").(*jwt.Claims)
+			claims := req.Context().Value(claimKey{}).(*jwt.Claims)
 			if n, ok := claims.Number("deadline"); !ok {
 				fmt.Fprintln(w, "you don't have a deadline")
 			} else {
@@ -114,7 +116,7 @@ func ExampleHandler_context() {
 			}
 		}),
 		Secret:     []byte("killarcherdie"),
-		ContextKey: "verified-jwt",
+		ContextKey: claimKey{},
 	}
 
 	req := httptest.NewRequest("GET", "/status", nil)
