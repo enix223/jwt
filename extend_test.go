@@ -5,7 +5,7 @@ import (
 	_ "crypto/sha1" // must link into binary
 	"fmt"
 
-	"github.com/enix223/jwt"
+	"github.com/pascaldekloe/jwt"
 )
 
 // HS1 is a SHA1 extension.

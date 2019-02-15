@@ -1,10 +1,10 @@
-[![API Documentation](https://godoc.org/github.com/enix223/jwt?status.svg)](https://godoc.org/github.com/enix223/jwt)
-[![Build Status](https://travis-ci.org/enix223/jwt.svg?branch=master)](https://travis-ci.org/enix223/jwt)
+[![API Documentation](https://godoc.org/github.com/pascaldekloe/jwt?status.svg)](https://godoc.org/github.com/pascaldekloe/jwt)
+[![Build Status](https://travis-ci.org/pascaldekloe/jwt.svg?branch=master)](https://travis-ci.org/pascaldekloe/jwt)
 
 A JSON Web Token (JWT) library for the Go programming language.
 
 The API enforces secure use by design. Unsigned tokens are
-[rejected](https://godoc.org/github.com/enix223/jwt#ErrUnsecured)
+[rejected](https://godoc.org/github.com/pascaldekloe/jwt#ErrUnsecured)
 and there is no support for encryption—use wire encryption instead.
 
 * No third party dependencies
@@ -94,7 +94,7 @@ func Greeting(w http.ResponseWriter, req *http.Request) {
 ```
 
 Optionally one can use the claims object from the HTTP request as shown in the
-[“context” example](https://godoc.org/github.com/enix223/jwt#example-Handler--Context).
+[“context” example](https://godoc.org/github.com/pascaldekloe/jwt#example-Handler--Context).
 
 
 ### Performance on a Mac Pro (late 2013)

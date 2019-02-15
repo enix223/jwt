@@ -12,7 +12,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/enix223/jwt"
+	"github.com/pascaldekloe/jwt"
 )
 
 var someECKey *ecdsa.PrivateKey
