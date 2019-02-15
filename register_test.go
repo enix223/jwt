@@ -374,7 +374,7 @@ P9j/1Whc92wzd4Osod3U6Tw9g+C1LuHuHOoLJhj5nUQQcP8UQk6jzKPwr4L4uKAc
 
 	keys.Secrets = append(keys.Secrets, []byte{1, 2})
 
-	if _, err := keys.Check([]byte("broken")); err != errPart {
+	if _, err := keys.Check([]byte("broken")); err != ErrPart {
 		t.Error("broken token got error:", err)
 	}
 

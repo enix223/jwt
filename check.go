@@ -20,19 +20,20 @@ var ErrSigMiss = errors.New("jwt: signature mismatch")
 // ErrUnsecured signals the "none" algorithm.
 var ErrUnsecured = errors.New("jwt: unsecured—no signature")
 
-var errPart = errors.New("jwt: missing base64 part")
+// ErrPart missing base64 part
+var ErrPart = errors.New("jwt: missing base64 part")
 
 // ECDSACheck parses a JWT and returns the claims set if, and only if, the
 // signature checks out. Note that this excludes unsecured JWTs [ErrUnsecured].
 // When the algorithm is not in ECDSAAlgs, then the error is ErrAlgUnk.
 // See Valid to complete the verification.
 func ECDSACheck(token []byte, key *ecdsa.PublicKey) (*Claims, error) {
-	firstDot, lastDot, sig, header, err := scan(token)
+	firstDot, lastDot, sig, Header, err := scan(token)
 	if err != nil {
 		return nil, err
 	}
 
-	hash, err := header.match(ECDSAAlgs)
+	hash, err := Header.Match(ECDSAAlgs)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +46,7 @@ func ECDSACheck(token []byte, key *ecdsa.PublicKey) (*Claims, error) {
 		return nil, ErrSigMiss
 	}
 
-	return parseClaims(token[firstDot+1:lastDot], sig[:cap(sig)], header)
+	return ParseClaims(token[firstDot+1:lastDot], sig[:cap(sig)], Header)
 }
 
 // HMACCheck parses a JWT and returns the claims set if, and only if, the
@@ -53,12 +54,12 @@ func ECDSACheck(token []byte, key *ecdsa.PublicKey) (*Claims, error) {
 // When the algorithm is not in HMACAlgs, then the error is ErrAlgUnk.
 // See Valid to complete the verification.
 func HMACCheck(token, secret []byte) (*Claims, error) {
-	firstDot, lastDot, sig, header, err := scan(token)
+	firstDot, lastDot, sig, Header, err := scan(token)
 	if err != nil {
 		return nil, err
 	}
 
-	hash, err := header.match(HMACAlgs)
+	hash, err := Header.Match(HMACAlgs)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +70,7 @@ func HMACCheck(token, secret []byte) (*Claims, error) {
 		return nil, ErrSigMiss
 	}
 
-	return parseClaims(token[firstDot+1:lastDot], sig[:cap(sig)], header)
+	return ParseClaims(token[firstDot+1:lastDot], sig[:cap(sig)], Header)
 }
 
 // RSACheck parses a JWT and returns the claims set if, and only if, the
@@ -77,12 +78,12 @@ func HMACCheck(token, secret []byte) (*Claims, error) {
 // When the algorithm is not in RSAAlgs, then the error is ErrAlgUnk.
 // See Valid to complete the verification.
 func RSACheck(token []byte, key *rsa.PublicKey) (*Claims, error) {
-	firstDot, lastDot, sig, header, err := scan(token)
+	firstDot, lastDot, sig, Header, err := scan(token)
 	if err != nil {
 		return nil, err
 	}
 
-	hash, err := header.match(RSAAlgs)
+	hash, err := Header.Match(RSAAlgs)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +91,7 @@ func RSACheck(token []byte, key *rsa.PublicKey) (*Claims, error) {
 	digest := hash.New()
 	digest.Write(token[:lastDot])
 
-	if header.Alg[0] == 'P' {
+	if Header.Alg[0] == 'P' {
 		err = rsa.VerifyPSS(key, hash, digest.Sum(sig[len(sig):]), sig, nil)
 	} else {
 		err = rsa.VerifyPKCS1v15(key, hash, digest.Sum(sig[len(sig):]), sig)
@@ -99,15 +100,15 @@ func RSACheck(token []byte, key *rsa.PublicKey) (*Claims, error) {
 		return nil, ErrSigMiss
 	}
 
-	return parseClaims(token[firstDot+1:lastDot], sig[:cap(sig)], header)
+	return ParseClaims(token[firstDot+1:lastDot], sig[:cap(sig)], Header)
 }
 
-func scan(token []byte) (firstDot, lastDot int, sig []byte, h *header, err error) {
+func scan(token []byte) (firstDot, lastDot int, sig []byte, h *Header, err error) {
 	firstDot = bytes.IndexByte(token, '.')
 	lastDot = bytes.LastIndexByte(token, '.')
 	if lastDot <= firstDot {
 		// zero or one dot
-		return 0, 0, nil, nil, errPart
+		return 0, 0, nil, nil, ErrPart
 	}
 
 	buf := make([]byte, encoding.DecodedLen(len(token)))
@@ -117,7 +118,7 @@ func scan(token []byte) (firstDot, lastDot int, sig []byte, h *header, err error
 		return 0, 0, nil, nil, errors.New("jwt: malformed header: " + err.Error())
 	}
 
-	h = new(header)
+	h = new(Header)
 	if err := json.Unmarshal(buf[:n], h); err != nil {
 		return 0, 0, nil, nil, errors.New("jwt: malformed header: " + err.Error())
 	}
@@ -126,7 +127,7 @@ func scan(token []byte) (firstDot, lastDot int, sig []byte, h *header, err error
 	// and supported by the recipient, then the JWS is invalid.”
 	// — “JSON Web Signature (JWS)” RFC 7515, subsection 4.1.11
 	if len(h.Crit) != 0 {
-		return 0, 0, nil, nil, fmt.Errorf("jwt: unsupported critical extension in JOSE header: %q", h.Crit)
+		return 0, 0, nil, nil, fmt.Errorf("jwt: unsupported critical extension in JOSE Header: %q", h.Crit)
 	}
 
 	// verify signature
@@ -140,13 +141,14 @@ func scan(token []byte) (firstDot, lastDot int, sig []byte, h *header, err error
 }
 
 // Header is a critical subset of the registered “JOSE Header Parameter Names”.
-type header struct {
+type Header struct {
 	Alg  string   // algorithm
 	Kid  string   // key identifier
 	Crit []string // extensions which must be understood and processed
 }
 
-func (h *header) match(algs map[string]crypto.Hash) (crypto.Hash, error) {
+// Match match token encry alg
+func (h *Header) Match(algs map[string]crypto.Hash) (crypto.Hash, error) {
 	// why would anyone do this?
 	if h.Alg == "none" {
 		return 0, ErrUnsecured
@@ -163,8 +165,8 @@ func (h *header) match(algs map[string]crypto.Hash) (crypto.Hash, error) {
 	return hash, nil
 }
 
-// Buf remains in use (by the Raw field)!
-func parseClaims(enc, buf []byte, header *header) (*Claims, error) {
+// ParseClaims Buf remains in use (by the Raw field)!
+func ParseClaims(enc, buf []byte, Header *Header) (*Claims, error) {
 	n, err := encoding.Decode(buf, enc)
 	if err != nil {
 		return nil, errors.New("jwt: malformed payload: " + err.Error())
@@ -175,7 +177,7 @@ func parseClaims(enc, buf []byte, header *header) (*Claims, error) {
 	c := &Claims{
 		Raw:   json.RawMessage(buf),
 		Set:   make(map[string]interface{}),
-		KeyID: header.Kid,
+		KeyID: Header.Kid,
 	}
 	if err = json.Unmarshal(buf, &c.Set); err != nil {
 		return nil, errors.New("jwt: malformed payload: " + err.Error())

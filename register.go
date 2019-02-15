@@ -27,13 +27,13 @@ func (keys *KeyRegister) Check(token []byte) (*Claims, error) {
 		return nil, err
 	}
 
-	switch hash, err := header.match(HMACAlgs); err {
+	switch hash, err := header.Match(HMACAlgs); err {
 	case nil:
 		for _, secret := range keys.Secrets {
 			digest := hmac.New(hash.New, secret)
 			digest.Write(token[:lastDot])
 			if hmac.Equal(sig, digest.Sum(sig[len(sig):])) {
-				return parseClaims(token[firstDot+1:lastDot], sig[:cap(sig)], header)
+				return ParseClaims(token[firstDot+1:lastDot], sig[:cap(sig)], header)
 			}
 		}
 		return nil, ErrSigMiss
@@ -44,7 +44,7 @@ func (keys *KeyRegister) Check(token []byte) (*Claims, error) {
 		return nil, err
 	}
 
-	switch hash, err := header.match(RSAAlgs); err {
+	switch hash, err := header.Match(RSAAlgs); err {
 	case nil:
 		digest := hash.New()
 		digest.Write(token[:lastDot])
@@ -56,7 +56,7 @@ func (keys *KeyRegister) Check(token []byte) (*Claims, error) {
 				err = rsa.VerifyPKCS1v15(key, hash, digestSum, sig)
 			}
 			if err == nil {
-				return parseClaims(token[firstDot+1:lastDot], sig[:cap(sig)], header)
+				return ParseClaims(token[firstDot+1:lastDot], sig[:cap(sig)], header)
 			}
 		}
 		return nil, ErrSigMiss
@@ -67,7 +67,7 @@ func (keys *KeyRegister) Check(token []byte) (*Claims, error) {
 		return nil, err
 	}
 
-	switch hash, err := header.match(ECDSAAlgs); err {
+	switch hash, err := header.Match(ECDSAAlgs); err {
 	case nil:
 		r := big.NewInt(0).SetBytes(sig[:len(sig)/2])
 		s := big.NewInt(0).SetBytes(sig[len(sig)/2:])
@@ -77,7 +77,7 @@ func (keys *KeyRegister) Check(token []byte) (*Claims, error) {
 
 		for _, key := range keys.ECDSAs {
 			if ecdsa.Verify(key, digestSum, r, s) {
-				return parseClaims(token[firstDot+1:lastDot], sig[:cap(sig)], header)
+				return ParseClaims(token[firstDot+1:lastDot], sig[:cap(sig)], header)
 			}
 		}
 		return nil, ErrSigMiss

@@ -163,7 +163,7 @@ func TestCheckHashNotLinked(t *testing.T) {
 
 func TestJOSEExtension(t *testing.T) {
 	_, err := HMACCheck([]byte("eyJhbGciOiJIUzI1NiIsImNyaXQiOlsiZXhwIl0sImV4cCI6MTM2MzI4NDAwMH0.e30.8Ep7gVUA49twmE6NYAiEwVwwtn_UmJEkOH1uQSPPYr0"), nil)
-	const want = "jwt: unsupported critical extension in JOSE header: [\"exp\"]"
+	const want = "jwt: unsupported critical extension in JOSE Header: [\"exp\"]"
 	if err == nil || err.Error() != want {
 		t.Errorf("got error %q, want %q", err, want)
 	}
@@ -171,20 +171,20 @@ func TestJOSEExtension(t *testing.T) {
 
 func TestErrPart(t *testing.T) {
 	_, err := ECDSACheck([]byte("eyJhbGciOiJFUzI1NiJ9"), &testKeyEC256.PublicKey)
-	if err != errPart {
+	if err != ErrPart {
 		t.Errorf("header only got error %v", err)
 	}
 	_, err = RSACheck([]byte("eyJhbGciOiJub25lIn0"), &testKeyRSA1024.PublicKey)
-	if err != errPart {
+	if err != ErrPart {
 		t.Errorf("unsecured header only got error %v", err)
 	}
 
 	_, err = ECDSACheck([]byte("eyJhbGciOiJFUzI1NiJ9.e30"), &testKeyEC384.PublicKey)
-	if err != errPart {
+	if err != ErrPart {
 		t.Errorf("one dot got error %v", err)
 	}
 	_, err = HMACCheck([]byte("eyJhbGciOiJub25lIn0.e30"), nil)
-	if err != errPart {
+	if err != ErrPart {
 		t.Errorf("unsecured one dot got error %v", err)
 	}
 }

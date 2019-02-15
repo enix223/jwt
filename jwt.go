@@ -246,7 +246,7 @@ func (c *Claims) Number(name string) (value float64, ok bool) {
 	return
 }
 
-// NumericTime, named NumericDate, is “A JSON numeric value representing
+// NumericTime named NumericDate, is “A JSON numeric value representing
 // the number of seconds from 1970-01-01T00:00:00Z UTC until the specified
 // UTC date/time, ignoring leap seconds.”
 type NumericTime float64
