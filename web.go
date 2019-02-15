@@ -25,7 +25,7 @@ var errAuthSchema = errors.New("jwt: want Bearer schema")
 // ECDSACheckHeader applies ECDSACheck on a HTTP request.
 // Specifically it looks for a bearer token in the Authorization header.
 func ECDSACheckHeader(r *http.Request, key *ecdsa.PublicKey) (*Claims, error) {
-	token, err := tokenFromHeader(r)
+	token, err := TokenFromHeader(r)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +35,7 @@ func ECDSACheckHeader(r *http.Request, key *ecdsa.PublicKey) (*Claims, error) {
 // HMACCheckHeader applies HMACCheck on a HTTP request.
 // Specifically it looks for a bearer token in the Authorization header.
 func HMACCheckHeader(r *http.Request, secret []byte) (*Claims, error) {
-	token, err := tokenFromHeader(r)
+	token, err := TokenFromHeader(r)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func HMACCheckHeader(r *http.Request, secret []byte) (*Claims, error) {
 // RSACheckHeader applies RSACheck on a HTTP request.
 // Specifically it looks for a bearer token in the Authorization header.
 func RSACheckHeader(r *http.Request, key *rsa.PublicKey) (*Claims, error) {
-	token, err := tokenFromHeader(r)
+	token, err := TokenFromHeader(r)
 	if err != nil {
 		return nil, err
 	}
@@ -55,14 +55,15 @@ func RSACheckHeader(r *http.Request, key *rsa.PublicKey) (*Claims, error) {
 // CheckHeader applies KeyRegister.Check on a HTTP request.
 // Specifically it looks for a bearer token in the Authorization header.
 func (keys *KeyRegister) CheckHeader(r *http.Request) (*Claims, error) {
-	token, err := tokenFromHeader(r)
+	token, err := TokenFromHeader(r)
 	if err != nil {
 		return nil, err
 	}
 	return keys.Check(token)
 }
 
-func tokenFromHeader(r *http.Request) ([]byte, error) {
+// TokenFromHeader extract token from request header
+func TokenFromHeader(r *http.Request) ([]byte, error) {
 	auth := r.Header.Get("Authorization")
 	if auth == "" {
 		return nil, ErrNoHeader
@@ -130,7 +131,7 @@ type Handler struct {
 	// ContextKey places the validated Claims in the context of
 	// each respective request passed to Target when set. See
 	// http.Request.Context and context.Context.Value.
-	ContextKey string
+	ContextKey interface{}
 
 	// When not nil, then Func is called after the JWT validation
 	// succeeds and before any header bindings. Target is skipped
