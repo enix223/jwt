@@ -195,7 +195,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// place claims in request context
-	if h.ContextKey != "" {
+	if h.ContextKey != nil {
 		r = r.WithContext(context.WithValue(r.Context(), h.ContextKey, claims))
 	}
 

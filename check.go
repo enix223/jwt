@@ -28,7 +28,7 @@ var ErrPart = errors.New("jwt: missing base64 part")
 // When the algorithm is not in ECDSAAlgs, then the error is ErrAlgUnk.
 // See Valid to complete the verification.
 func ECDSACheck(token []byte, key *ecdsa.PublicKey) (*Claims, error) {
-	firstDot, lastDot, sig, Header, err := scan(token)
+	firstDot, lastDot, sig, Header, err := Scan(token)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func ECDSACheck(token []byte, key *ecdsa.PublicKey) (*Claims, error) {
 // When the algorithm is not in HMACAlgs, then the error is ErrAlgUnk.
 // See Valid to complete the verification.
 func HMACCheck(token, secret []byte) (*Claims, error) {
-	firstDot, lastDot, sig, Header, err := scan(token)
+	firstDot, lastDot, sig, Header, err := Scan(token)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func HMACCheck(token, secret []byte) (*Claims, error) {
 // When the algorithm is not in RSAAlgs, then the error is ErrAlgUnk.
 // See Valid to complete the verification.
 func RSACheck(token []byte, key *rsa.PublicKey) (*Claims, error) {
-	firstDot, lastDot, sig, Header, err := scan(token)
+	firstDot, lastDot, sig, Header, err := Scan(token)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,8 @@ func RSACheck(token []byte, key *rsa.PublicKey) (*Claims, error) {
 	return ParseClaims(token[firstDot+1:lastDot], sig[:cap(sig)], Header)
 }
 
-func scan(token []byte) (firstDot, lastDot int, sig []byte, h *Header, err error) {
+// Scan extract header/dot from token
+func Scan(token []byte) (firstDot, lastDot int, sig []byte, h *Header, err error) {
 	firstDot = bytes.IndexByte(token, '.')
 	lastDot = bytes.LastIndexByte(token, '.')
 	if lastDot <= firstDot {
